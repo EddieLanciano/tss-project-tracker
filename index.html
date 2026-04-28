@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technical Support Specialist Team Leader — Project Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F5F0; --surface: #FFFFFF; --accent: #1A1A2E; --accent2: #4A6FA5;
+    --text-primary: #1A1A2E; --text-secondary: #6B6B7B; --text-muted: #A0A0AE; --border: #E4E2DB;
+    --todo-bg: #F3F0E8; --todo-text: #6B6245; --inprog-bg: #E8EEF7; --inprog-text: #2E5090;
+    --done-bg: #E8F3EC; --done-text: #2A6B45;
+    --rag-red: #E24B4A; --rag-yellow: #E9A800; --rag-green: #3A9D5D; --rag-empty: #E4E2DB;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+  .page-header { background: var(--accent); color: white; padding: 48px 40px 40px; position: relative; overflow: hidden; }
+  .page-header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 280px; height: 280px; border-radius: 50%; background: rgba(74,111,165,0.2); }
+  .page-header::after { content: ''; position: absolute; bottom: -80px; left: 40%; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+  .header-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; }
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 42px; font-weight: 400; line-height: 1.1; position: relative; z-index: 1; }
+  .header-title em { font-style: italic; color: rgba(255,255,255,0.6); }
+  .header-meta { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 16px; display: flex; gap: 24px; position: relative; z-index: 1; flex-wrap: wrap; }
+  .header-meta span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); display: inline-block; }
+
+  .stats-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 40px; display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat-num { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text-primary); line-height: 1; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 500; }
+  .stat-divider { width: 1px; background: var(--border); align-self: stretch; }
+  .rag-legend { margin-left: auto; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .rag-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+  .rag-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .rag-dot.red { background: var(--rag-red); box-shadow: 0 0 5px var(--rag-red); }
+  .rag-dot.yellow { background: var(--rag-yellow); box-shadow: 0 0 5px var(--rag-yellow); }
+  .rag-dot.green { background: var(--rag-green); box-shadow: 0 0 5px var(--rag-green); }
+
+  .content { padding: 32px 40px 60px; }
+  .section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px; }
+
+  /* Grid: # | proj-status | project (wide) | owner | status | priority | start | end | % | last updated */
+  .col-headers {
+    display: grid;
+    grid-template-columns: 44px 90px minmax(0,1fr) 90px 100px 60px 82px 82px 90px 90px;
+    gap: 12px;
+    padding: 0 20px 10px;
+    font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+  }
+  .projects { display: flex; flex-direction: column; gap: 8px; }
+  .project-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0; overflow: hidden;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .project-card:hover { border-color: #C8C4BB; box-shadow: 0 2px 12px rgba(26,26,46,0.06); }
+
+  .card-main {
+    display: grid;
+    grid-template-columns: 44px 90px minmax(0,1fr) 90px 100px 60px 82px 82px 90px 90px;
+    gap: 12px;
+    padding: 16px 20px;
+    align-items: center;
+  }
+
+  /* Expandable description */
+  .card-desc {
+    border-top: 1px solid var(--border);
+    padding: 10px 20px 12px calc(44px + 90px + 20px + 24px);
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    background: #FAFAF8;
+    display: none;
+  }
+  .project-card.expanded .card-desc { display: block; }
+  .project-card.expanded .card-main { padding-bottom: 14px; }
+
+  .proj-id { font-size: 11px; font-weight: 500; color: var(--text-muted); background: var(--bg); border-radius: 6px; padding: 3px 6px; display: inline-block; letter-spacing: 0.04em; }
+
+  /* Traffic light dot */
+  .traffic-light { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tl-stack { display: flex; flex-direction: column; gap: 4px; align-items: center; background: #2a2a2a; border-radius: 20px; padding: 6px 5px; width: 22px; }
+  .tl-dot { width: 12px; height: 12px; border-radius: 50%; background: #444; }
+  .tl-dot.red.on    { background: var(--rag-red);    box-shadow: 0 0 6px var(--rag-red); }
+  .tl-dot.yellow.on { background: var(--rag-yellow); box-shadow: 0 0 6px var(--rag-yellow); }
+  .tl-dot.green.on  { background: var(--rag-green);  box-shadow: 0 0 6px var(--rag-green); }
+  .tl-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  .tl-label.red    { color: var(--rag-red); }
+  .tl-label.yellow { color: var(--rag-yellow); }
+  .tl-label.green  { color: var(--rag-green); }
+  .tl-label.empty  { color: var(--text-muted); font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  /* Project name with expand toggle */
+  .proj-name-wrap { cursor: pointer; }
+  .proj-title { font-size: 13px; font-weight: 500; color: var(--text-primary); line-height: 1.3; display: flex; align-items: flex-start; gap: 6px; }
+  .proj-title-text { flex: 1; }
+  .expand-icon { font-size: 10px; color: var(--text-muted); margin-top: 2px; flex-shrink: 0; transition: transform 0.2s; }
+  .project-card.expanded .expand-icon { transform: rotate(180deg); }
+  .proj-tag { display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 500; color: var(--accent2); background: var(--inprog-bg); border-radius: 4px; padding: 2px 6px; }
+
+  .proj-owner { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+  .owner-avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: white; font-size: 8px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 4px 9px; border-radius: 20px; white-space: nowrap; }
+  .badge-todo { background: var(--todo-bg); color: var(--todo-text); }
+  .badge-inprog { background: var(--inprog-bg); color: var(--inprog-text); }
+  .badge-done { background: var(--done-bg); color: var(--done-text); }
+
+  .priority { font-size: 13px; font-weight: 500; }
+  .priority.p1 { color: var(--rag-red); }
+  .priority.p2 { color: var(--rag-yellow); }
+  .priority.p3 { color: #3A9D5D; }
+  .priority.empty { color: var(--text-muted); font-style: italic; }
+
+  .proj-date { font-size: 12px; color: var(--text-muted); font-style: italic; white-space: nowrap; }
+  .proj-date.ongoing { font-style: normal; font-size: 11px; font-weight: 500; color: var(--inprog-text); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .progress-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .progress-track { width: 100%; height: 6px; background: var(--rag-empty); border-radius: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 20px; background: var(--accent2); }
+  .progress-label { font-size: 10px; font-weight: 500; color: var(--text-secondary); }
+
+  .last-updated { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+  .page-footer { text-align: center; padding: 28px 40px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); background: var(--surface); }
+
+  @media print {
+    body { background: white; }
+    .page-header { background: #1A1A2E !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .card-desc { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="header-eyebrow">Technical Support Specialist Team Leader</div>
+  <div class="header-title">Project Tracker <em>2026/27</em></div>
+  <div class="header-meta">
+    <span><span class="dot"></span> Owner: Eddie Lanciano</span>
+    <span><span class="dot"></span> Last updated: April 2026</span>
+    <span><span class="dot"></span> 8 projects</span>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">8</div><div class="stat-label">Total</div></div>
+  <div class="stat-divider"></div>
+  <div class="stat"><div class="stat-num">5</div><div class="stat-label">To do</div></div>
+  <div class="stat-divider"></div>
+  <div class="stat"><div class="stat-num">3</div><div class="stat-label">In progress</div></div>
+  <div class="stat-divider"></div>
+  <div class="stat"><div class="stat-num">0</div><div class="stat-label">Completed</div></div>
+  <div class="rag-legend">
+    <div class="rag-legend-item"><span class="rag-dot green"></span> On track</div>
+    <div class="rag-legend-item"><span class="rag-dot yellow"></span> Delayed but on track</div>
+    <div class="rag-legend-item"><span class="rag-dot red"></span> Delayed</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="section-label">All projects — click a row to expand description</div>
+  <div class="col-headers">
+    <div>#</div>
+    <div>Project status</div>
+    <div>Project</div>
+    <div>Owner</div>
+    <div>Status</div>
+    <div>Priority</div>
+    <div>Start date</div>
+    <div>End date</div>
+    <div>% Complete</div>
+    <div>Last updated</div>
+  </div>
+
+  <div class="projects">
+
+    <!-- P-1 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-1</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red"></div>
+            <div class="tl-dot yellow"></div>
+            <div class="tl-dot green on"></div>
+          </div>
+          <div class="tl-label green">On track</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">Zendesk followers &amp; tags alignment</span><span class="expand-icon">▼</span></div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-todo">To do</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date">—</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">Sync followers and tags according to organization status — align with Natalie</div>
+    </div>
+
+    <!-- P-2 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-2</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red on"></div>
+            <div class="tl-dot yellow on"></div>
+            <div class="tl-dot green"></div>
+          </div>
+          <div class="tl-label red">Delayed</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">TSS R&amp;R for 2026/27</span><span class="expand-icon">▼</span></div>
+          <div class="proj-tag">Sub-activities to be added</div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-todo">To do</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date">—</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">Add more responsibilities and ownership to the team. Meeting notes pending publication — sub-activities will be broken down once available.</div>
+    </div>
+
+    <!-- P-3 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-3</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red"></div>
+            <div class="tl-dot yellow"></div>
+            <div class="tl-dot green"></div>
+          </div>
+          <div class="tl-label empty">—</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">Stella — Zendesk AI agent</span><span class="expand-icon">▼</span></div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-todo">To do</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date">—</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">Expand use cases and automations for the Stella Zendesk AI agent</div>
+    </div>
+
+    <!-- P-4 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-4</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red"></div>
+            <div class="tl-dot yellow"></div>
+            <div class="tl-dot green"></div>
+          </div>
+          <div class="tl-label empty">—</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">Stella — ongoing improvements</span><span class="expand-icon">▼</span></div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-inprog">In progress</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date ongoing">Ongoing</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">Review conversation logs and add new articles or update existing ones accordingly. Reviewing conversation logs regularly to identify gaps.</div>
+    </div>
+
+    <!-- P-5 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-5</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red"></div>
+            <div class="tl-dot yellow"></div>
+            <div class="tl-dot green"></div>
+          </div>
+          <div class="tl-label empty">—</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">Macros for ticket replies</span><span class="expand-icon">▼</span></div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-todo">To do</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date">—</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">Add new macros and remove outdated ones no longer in use. Changes and new macros added during the timeframe will be logged here.</div>
+    </div>
+
+    <!-- P-6 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-6</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red"></div>
+            <div class="tl-dot yellow"></div>
+            <div class="tl-dot green"></div>
+          </div>
+          <div class="tl-label empty">—</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">Zendesk co-pilot implementation</span><span class="expand-icon">▼</span></div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-todo">To do</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date">—</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">New out-of-the-box AI tool from Zendesk</div>
+    </div>
+
+    <!-- P-7 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-7</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red"></div>
+            <div class="tl-dot yellow"></div>
+            <div class="tl-dot green"></div>
+          </div>
+          <div class="tl-label empty">—</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">Aging ticket review &amp; Dev escalation</span><span class="expand-icon">▼</span></div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-inprog">In progress</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date ongoing">Ongoing</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">Review aging tickets weekly and escalate to Dev as needed. Weekly recurring task.</div>
+    </div>
+
+    <!-- P-8 -->
+    <div class="project-card">
+      <div class="card-main">
+        <div><span class="proj-id">P-8</span></div>
+        <div class="traffic-light">
+          <div class="tl-stack">
+            <div class="tl-dot red"></div>
+            <div class="tl-dot yellow"></div>
+            <div class="tl-dot green"></div>
+          </div>
+          <div class="tl-label empty">—</div>
+        </div>
+        <div class="proj-name-wrap" onclick="toggle(this)">
+          <div class="proj-title"><span class="proj-title-text">Weekly report — support center achievements</span><span class="expand-icon">▼</span></div>
+        </div>
+        <div class="proj-owner"><div class="owner-avatar">EL</div> Eddie</div>
+        <div><span class="badge badge-inprog">In progress</span></div>
+        <div><span class="priority empty">—</span></div>
+        <div class="proj-date">—</div>
+        <div class="proj-date ongoing">Ongoing</div>
+        <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" style="width:0%"></div></div><div class="progress-label">—</div></div>
+        <div class="last-updated">—</div>
+      </div>
+      <div class="card-desc">Compile and share support center achievements on a weekly basis. Weekly recurring task.</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="page-footer">
+  Technical Support Specialist Team Leader &nbsp;·&nbsp; Eddie Lanciano &nbsp;·&nbsp; April 2026
+</div>
+
+<script>
+function toggle(el) {
+  const card = el.closest('.project-card');
+  card.classList.toggle('expanded');
+}
+</script>
+
+</body>
+</html>
